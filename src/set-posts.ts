@@ -1,7 +1,6 @@
 import { Bot } from '@skyware/bot';
 
 import { BSKY_IDENTIFIER, BSKY_PASSWORD } from './config.js';
-import { LABELS } from './constants.js';
 
 const bot = new Bot();
 
@@ -32,24 +31,6 @@ if (answer === 'y') {
 } else {
   console.log('Operation cancelled.');
   process.exit(0);
-}
-
-const post = await bot.post({
-  text: 'Like the replies to this post to receive labels.',
-  threadgate: { allowLists: [] },
-});
-
-const labelNames = LABELS.map((label) => label.locales.map((locale) => locale.name).join(' | '));
-const labelRkeys: Record<string, string> = {};
-for (const labelName of labelNames) {
-  const labelPost = await post.reply({ text: labelName });
-  labelRkeys[labelName] = labelPost.uri.split('/').pop()!;
-}
-
-console.log('Label rkeys:');
-for (const [name, rkey] of Object.entries(labelRkeys)) {
-  console.log(`    name: '${name}',`);
-  console.log(`    rkey: '${rkey}',`);
 }
 
 const deletePost = await bot.post({ text: 'Like this post to delete all labels.' });

@@ -10,17 +10,15 @@ export const labelerServer = new LabelerServer({ did: DID, signingKey: SIGNING_K
 export const label = (did: string, rkey: string) => {
   logger.info(`Received rkey: ${rkey} for ${did}`);
 
-  if (rkey === 'self') {
-    logger.info(`${did} liked the labeler. Returning.`);
-    return;
-  }
   try {
     const labels = fetchCurrentLabels(did);
 
-    if (rkey.includes(DELETE)) {
+    if (rkey === 'self') {
+      assignRandomLabel(did, labels);
+    } else if (rkey.includes(DELETE)) {
       deleteAllLabels(did, labels);
     } else {
-      addOrUpdateLabel(did, rkey, labels);
+      logger.warn(`Unrecognized rkey ${rkey}. No action taken.`);
     }
   } catch (error) {
     logger.error(`Error in \`label\` function: ${error}`);
@@ -61,13 +59,15 @@ function deleteAllLabels(did: string, labels: Set<string>) {
   }
 }
 
-function addOrUpdateLabel(did: string, rkey: string, labels: Set<string>) {
-  const newLabel = LABELS.find((label) => label.rkey === rkey);
-  if (!newLabel) {
-    logger.warn(`New label not found: ${rkey}. Likely liked a post that's not one for labels.`);
+function assignRandomLabel(did: string, labels: Set<string>) {
+  if (LABELS.length === 0) {
+    logger.error('No labels configured.');
     return;
   }
-  logger.info(`New label: ${newLabel.identifier}`);
+
+  const randomIndex = Math.floor(Math.random() * LABELS.length);
+  const newLabel = LABELS[randomIndex];
+  logger.info(`Assigning label: ${newLabel.identifier}`);
 
   if (labels.size >= LABEL_LIMIT) {
     try {
